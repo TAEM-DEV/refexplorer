@@ -1,0 +1,48 @@
+# refexplorer k3s Job — triggered by AIANA after MISSION_LANDED or on-demand
+# Per ADR-009a C-009-009: runs as k3s Job, NOT inline in AIANA
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: refexplorer
+  namespace: taem
+  labels:
+    app: refexplorer
+    component: knowledge-worker
+    adr: "009a"
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: refexplorer
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: refexplorer
+          image: ghcr.io/taem-dev/refexplorer:latest
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          env:
+            - name: TASK_DESCRIPTION
+              value: ""  # Set by Job creator
+            - name: DOMAIN_TAGS
+              value: ""  # Set by Job creator (comma-separated)
+            - name: MISSION_ID
+              value: ""  # Optional: set by kernel.mission_close
+            - name: OLLAMA_URL
+              value: "http://ollama.fabric-sdk:11434"
+            - name: QDRANT_URL
+              value: "http://qdrant.fabric-sdk:6333"
+            - name: REDIS_URL
+              value: "redis://redis-master.fabric-sdk:6379"
+            - name: MAX_PAPERS
+              value: "20"
+            - name: SS_RATE_LIMIT
+              value: "1.1"
